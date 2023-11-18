@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getAllMovies } from "./components/Transportlayer";
+import MovieList from "./components/MovieList";
 
 function App() {
   const [movies, setMovies] = useState([]);
@@ -12,15 +13,7 @@ function App() {
       .catch((error) => console.log(error));
   }, []);
 
-  return (
-    <div>
-      <ul>
-        {movies.map((movie) => (
-          <li key={movie.id}>{movie.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
+  return <MovieList movies={movies} />;
 }
 
 export default App;

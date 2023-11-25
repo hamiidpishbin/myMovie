@@ -1,12 +1,16 @@
 import React from "react";
 import MovieListItem from "./MovieListItem";
 
-export default function MovieList(movies) {
-  const moviesList = Array.from(movies);
+export default function MovieList({ movies, handleCheckboxClick }) {
   return (
     <ul>
-      {moviesList.map((movie) => (
-        <MovieListItem movie={movie} />
+      {movies.map((movie) => (
+        <MovieListItem
+          key={movie.id}
+          movie={movie}
+          handleCheckboxclick={handleCheckboxClick}
+          
+        />
       ))}
     </ul>
   );

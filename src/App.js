@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import { getAllMovies } from "./components/Transportlayer";
 import MovieList from "./components/MovieList";
 import Loading from "./components/Loading";
+import MovieDetail from "./pages/MovieDetail";
 
 function App() {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filteredMovies, setFilteredMovies] = useState([]);
+  const [onlyWatched, setOnlyWatched] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [selectedMovie, setSelectedMovie] = useState(null);
 
   useEffect(() => {
     getAllMovies()
@@ -15,9 +18,9 @@ function App() {
           id: item.id,
           name: item.name,
           watched: false,
+          description: item.description,
         }));
         setMovies(tempMovies);
-        setFilteredMovies(tempMovies);
       })
       .catch((error) => console.log(error));
   }, []);
@@ -26,21 +29,40 @@ function App() {
     setLoading(false);
   }, [movies]);
 
-  const handleCheckboxClick = (event) => {
-    const clickedMovieIndex = movies.findIndex(
-      (movie) => movie.id === parseInt(event.target.id)
-    );
+  const handleCheckboxClick = (event, id) => {
+    const clickedMovieIndex = movies.findIndex((movie) => movie.id === id);
     movies[clickedMovieIndex].watched = event.target.checked;
   };
 
-  const handleFilteredMovies = (event) => {
-    if (event.target.checked) {
-      const filteredMovies = movies.filter((movie) => movie.watched);
-      setFilteredMovies(filteredMovies);
-    } else {
-      setFilteredMovies(movies);
-    }
+  const getMovies = () => {
+    const filteredMovies = getFilteredMovies(movies);
+    return !onlyWatched ? filteredMovies : getOnlyWatchedMovies(filteredMovies);
   };
+
+  const getOnlyWatchedMovies = (movies) => {
+    return movies.filter((movie) => movie.watched);
+  };
+
+  const getFilteredMovies = (movies) => {
+    return movies.filter((movie) =>
+      movie.name.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  };
+
+  const handleSearch = (e) => {
+    setSearchValue(e.target.value);
+  };
+
+  const handleDetailButtonClick = (id) => {
+    const selectedMovie = movies.filter(movie => movie.id === id)[0];
+    setSelectedMovie(selectedMovie);
+  };
+
+  const getPage = () => {
+    if (loading) return <Loading/>
+
+    if (selectedMovie === null) return <MovieDetail />
+  }
 
   return loading ? (
     <Loading />
@@ -49,12 +71,21 @@ function App() {
       <input
         type="checkbox"
         name="OnlyWatchedCheckbox"
-        onChange={handleFilteredMovies}
+        onChange={(e) => setOnlyWatched(e.target.checked)}
       />
       <label htmlFor="OnlyWatchedCheckbox">Show Watched Only</label>
+      <br />
+      <label htmlFor="searchBox">Search: </label>
+      <input
+        type="input"
+        name="searchBox"
+        value={searchValue}
+        onChange={handleSearch}
+      />
       <MovieList
-        movies={filteredMovies}
+        movies={getMovies()}
         handleCheckboxClick={handleCheckboxClick}
+        onDetailButtonClick={handleDetailButtonClick}
       />
     </>
   );

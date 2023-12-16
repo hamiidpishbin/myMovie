@@ -54,18 +54,18 @@ function App() {
   };
 
   const handleDetailButtonClick = (id) => {
-    const selectedMovie = movies.filter(movie => movie.id === id)[0];
-    setSelectedMovie(selectedMovie);
+    const clickedMovie = movies.filter((movie) => movie.id === id)[0];
+    setSelectedMovie(clickedMovie);
   };
 
-  const getPage = () => {
-    if (loading) return <Loading/>
-
-    if (selectedMovie === null) return <MovieDetail />
-  }
+  const handleBackClick = () => {
+    setSelectedMovie(null);
+  };
 
   return loading ? (
     <Loading />
+  ) : selectedMovie !== null ? (
+    <MovieDetail movie={selectedMovie} onBackClick={handleBackClick} />
   ) : (
     <>
       <input

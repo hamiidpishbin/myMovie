@@ -18,7 +18,7 @@ export default function MovieListItem({
       <label htmlFor={movie.id} style={{ marginRight: "5px" }}>
         {movie.name}
       </label>
-      <button onClick={onDetailButtonClick}>Detail</button>
+      <button onClick={() => onDetailButtonClick(movie.id)}>Detail</button>
       <br />
     </>
   );

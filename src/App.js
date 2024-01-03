@@ -1,77 +1,125 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useReducer } from "react";
 import { getAllMovies } from "./components/Transportlayer";
 import MovieList from "./components/MovieList";
 import Loading from "./components/Loading";
 import MovieDetail from "./pages/MovieDetail";
 
+const ACTION = {
+  API_SUCCESS: "API_SUCCESS",
+  SET_SEARCH_VALUE: "SET_SEARCH_VALUE",
+  SET_ONLY_WATCHED: "SET_ONLY_WATCHED",
+  SET_SELECTED_MOVIE: "SET_SELECTED_MOVIE",
+  SET_CHECKED: "SET_CHECKED",
+};
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case ACTION.API_SUCCESS:
+      return {
+        ...state,
+        movies: action.payload.movies,
+        loading: false,
+      };
+
+    case ACTION.SET_SEARCH_VALUE:
+      return {
+        ...state,
+        searchValue: action.payload.searchValue,
+      };
+
+    case ACTION.SET_ONLY_WATCHED:
+      return { ...state, onlyWatched: action.payload.onlyWatched };
+
+    case ACTION.SET_SELECTED_MOVIE:
+      return { ...state, selectedMovie: action.payload.clickedMovie };
+
+    default:
+      return state;
+  }
+};
+
 function App() {
-  const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [onlyWatched, setOnlyWatched] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
-  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [state, dispatch] = useReducer(reducer, {
+    movies: null,
+    loading: true,
+    searchValue: "",
+    onlyWatched: false,
+    selectedMovie: null,
+  });
 
   useEffect(() => {
     getAllMovies()
       .then((data) => {
-        const tempMovies = data.map((item) => ({
+        const movies = data.map((item) => ({
           id: item.id,
           name: item.name,
           watched: false,
           description: item.description,
         }));
-        setMovies(tempMovies);
+        dispatch({ type: ACTION.API_SUCCESS, payload: { movies } });
       })
       .catch((error) => console.log(error));
   }, []);
 
-  useEffect(() => {
-    setLoading(false);
-  }, [movies]);
-
-  const handleCheckboxClick = (event, id) => {
-    const clickedMovieIndex = movies.findIndex((movie) => movie.id === id);
-    movies[clickedMovieIndex].watched = event.target.checked;
+  const handleCheckboxClick = (event, id, setChecked) => {
+    const clickedMovieIndex = state.movies.findIndex(
+      (movie) => movie.id === id
+    );
+    state.movies[clickedMovieIndex].watched = event.target.checked;
+    setChecked(event.target.checked);
   };
 
   const getMovies = () => {
-    const filteredMovies = getFilteredMovies(movies);
-    return !onlyWatched ? filteredMovies : getOnlyWatchedMovies(filteredMovies);
+    const filteredMovies = getFilteredMovies(state.movies);
+    return state.onlyWatched
+      ? getOnlyWatchedMovies(filteredMovies)
+      : filteredMovies;
+  };
+
+  const getFilteredMovies = (movies) => {
+    return movies.filter((movie) =>
+      movie.name.toLowerCase().includes(state.searchValue.toLowerCase())
+    );
   };
 
   const getOnlyWatchedMovies = (movies) => {
     return movies.filter((movie) => movie.watched);
   };
 
-  const getFilteredMovies = (movies) => {
-    return movies.filter((movie) =>
-      movie.name.toLowerCase().includes(searchValue.toLowerCase())
-    );
-  };
-
   const handleSearch = (e) => {
-    setSearchValue(e.target.value);
+    dispatch({
+      type: ACTION.SET_SEARCH_VALUE,
+      payload: { searchValue: e.target.value },
+    });
   };
 
   const handleDetailButtonClick = (id) => {
-    const clickedMovie = movies.filter((movie) => movie.id === id)[0];
-    setSelectedMovie(clickedMovie);
+    const clickedMovie = state.movies.filter((movie) => movie.id === id)[0];
+    dispatch({ type: ACTION.SET_SELECTED_MOVIE, payload: { clickedMovie } });
   };
 
   const handleBackClick = () => {
-    setSelectedMovie(null);
+    dispatch({
+      type: ACTION.SET_SELECTED_MOVIE,
+      payload: { clickedMovie: null },
+    });
   };
 
-  return loading ? (
+  return state.loading ? (
     <Loading />
-  ) : selectedMovie !== null ? (
-    <MovieDetail movie={selectedMovie} onBackClick={handleBackClick} />
+  ) : state.selectedMovie !== null ? (
+    <MovieDetail movie={state.selectedMovie} onBackClick={handleBackClick} />
   ) : (
     <>
       <input
         type="checkbox"
         name="OnlyWatchedCheckbox"
-        onChange={(e) => setOnlyWatched(e.target.checked)}
+        onChange={(e) =>
+          dispatch({
+            type: ACTION.SET_ONLY_WATCHED,
+            payload: { onlyWatched: e.target.checked },
+          })
+        }
       />
       <label htmlFor="OnlyWatchedCheckbox">Show Watched Only</label>
       <br />
@@ -79,7 +127,7 @@ function App() {
       <input
         type="input"
         name="searchBox"
-        value={searchValue}
+        value={state.searchValue}
         onChange={handleSearch}
       />
       <MovieList

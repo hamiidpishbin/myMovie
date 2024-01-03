@@ -7,7 +7,7 @@ export default function MovieList({
   onDetailButtonClick,
 }) {
   return (
-    <ul>
+    <ul style={{ listStyleType: "none" }}>
       {movies.map((movie) => (
         <MovieListItem
           key={movie.id}
